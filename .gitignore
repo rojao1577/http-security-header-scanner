@@ -1,0 +1,12 @@
+# Ambiente virtual (recriado com: pip install -r requirements.txt)
+venv/
+
+# Cache do Python
+__pycache__/
+*.pyc
+
+# Variáveis de ambiente e credenciais
+.env
+
+# Documento de planejamento (mantido apenas localmente)
+HTTP_Header_Scanner_Plano.pdf
