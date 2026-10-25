@@ -2,7 +2,7 @@ import requests
 
 from headers_db import HEADERS, TOTAL_WEIGHT, score_to_grade
 
-TIMEOUT = 10 # segundos
+TIMEOUT = 10  # segundos
 
 
 def fetch_headers(url: str) -> requests.structures.CaseInsensitiveDict:
@@ -44,5 +44,6 @@ def analyze(headers: requests.structures.CaseInsensitiveDict) -> dict:
         "score": score,
         "grade": score_to_grade(score),
     }
+
 
 print(analyze(fetch_headers("https://github.com")))
