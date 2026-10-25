@@ -36,6 +36,12 @@ soluções prontas.
 - Claude não deve assumir que código mencionado em documentos de planejamento
   já existe — sempre verificar o estado real dos arquivos antes de planejar
   os próximos passos.
+- Formato que vem funcionando em cada etapa: Claude explica primeiro os
+  conceitos e as decisões técnicas (com opções e recomendação); quando o João
+  pede, Claude mostra o código completo **no chat**, explicado linha por linha,
+  e o João digita no arquivo. Explicar os termos técnicos usados (o João pede
+  isso) e usar analogias com C quando ajudar.
+- Depois que o João testa, Claude lê o arquivo, revisa, e só então commita e faz push.
 
 ## Escopo Fase 1 — CLI local (Python)
 
@@ -116,8 +122,47 @@ serverless na AWS para se tornar acessível via web. Incluir: motivação do
 projeto, screenshot do relatório no terminal, diagrama simples da arquitetura
 AWS (Lambda + API Gateway + S3), link para a ferramenta funcionando.
 
-## Estado atual do projeto (última verificação)
+## Estado atual do projeto (última verificação: 25/10/2026)
 
-Apesar do PDF de planejamento descrever `scanner.py` e `headers_db.py` como já
-implementados e testados, a pasta do projeto contém apenas o PDF e um
-`Scanner.py` vazio (0 bytes). O projeto está começando do zero na Fase 1.
+**Repositório:** https://github.com/rojao1577/http-security-header-scanner
+(público, branch `main`, local e remoto sincronizados).
+
+**Fase 1: em andamento.** O núcleo lógico já funciona (busca → análise → nota).
+
+| Etapa | Status |
+|---|---|
+| venv + `requirements.txt` (`requests`, `rich`) | ✅ concluída |
+| `headers_db.py`: `HEADERS` (peso, descrição, risco, correção), `TOTAL_WEIGHT`, `score_to_grade()` | ✅ concluída |
+| Git + GitHub + `.gitignore` + `README.md` (motivação, ferramentas, roadmap) | ✅ concluída |
+| **3a** `fetch_headers(url)` em `scanner.py` | ✅ concluída e commitada |
+| **3b** `analyze(headers)` em `scanner.py` | ✅ concluída e commitada (GitHub → 85, nota B, falta só Permissions-Policy) |
+| **3c** CLI: `argparse` + `if __name__ == "__main__":` + `try/except RequestException` com mensagem amigável | ⏭️ **PRÓXIMA ETAPA** |
+| **3d** relatório com `rich` (painel da nota, tabela de presentes, tabela de ausentes com risco/correção) | ⏳ pendente |
+| Testes `pytest`, `--json`, `--export-html`, aviso HTTP→HTTPS, validação de URL | ⏳ pendente |
+| Fase 2 (AWS) | ⏳ não iniciada |
+
+**Estado do `scanner.py`:** termina com um `print(analyze(fetch_headers("https://github.com")))`
+**temporário**, que deve ser substituído pelo `argparse` + `main` na 3c.
+
+**Decisões técnicas já tomadas (não reabrir sem motivo):**
+- `fetch_headers` usa GET (não HEAD), `timeout=TIMEOUT` (constante = 10s) passado
+  por nome, segue redirecionamentos, mantém `verify=True`, **não** usa
+  `raise_for_status()` (sites 4xx/5xx ainda têm headers analisáveis) e **não captura
+  exceções**: elas sobem para a camada de apresentação (CLI agora, Lambda na Fase 2).
+- `analyze` é função pura; percorre o `HEADERS` do DB (não os headers do site);
+  retorna `dict` com chaves `present` (nome → valor), `missing` (lista de nomes),
+  `score` (normalizado por `TOTAL_WEIGHT`, `round`) e `grade`. O dict foi escolhido
+  por virar JSON direto (`--json` e Lambda).
+- Nomes no código em inglês; comentários/docstrings em português.
+- O arquivo foi renomeado `Scanner.py` → `scanner.py` (Linux da Lambda diferencia maiúsculas/minúsculas).
+- O PDF de planejamento fica fora do Git (`.gitignore`).
+
+**Ideias registradas para o futuro:** validar o *conteúdo* dos headers (ex.: HSTS
+com `max-age=0`, CSP com `'unsafe-inline'`); analisar flags de cookies
+(`HttpOnly`, `Secure`, `SameSite`); configurar um formatador no VS Code.
+
+## Convenções de Git
+
+- Commits em português, padrão Conventional Commits (`feat:`, `docs:`, `chore:`, `style:`).
+- Um commit por etapa concluída e revisada; push logo em seguida.
+- **Sem linha `Co-Authored-By: Claude`** em nenhum commit (decisão do João).
